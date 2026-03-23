@@ -139,8 +139,8 @@ uploadForm.addEventListener('submit', async function(event) {
 
         // ── Step① LINEのトーク画面に「送信しました！」と自動で書き込みます ──────
         // ※これをすることで、薬剤師さんのスマホに「ピコン！」と通知が届きます。
-        // liff.sendMessages() は「患者さんのトーク画面に代わりに一言投稿する」機能です。
-        if (liff.isInClient()) {
+        const inClient = liff.isInClient();
+        if (inClient) {
             // LINEアプリの中からアクセスしている場合のみ使えます
             try {
                 await liff.sendMessages([
@@ -149,11 +149,17 @@ uploadForm.addEventListener('submit', async function(event) {
                         text: `【処方せん送信】\n${lineUserName}様から処方せん（${filesArray.length}枚）が届きました！\n準備ができましたらご連絡いたします。`
                     }
                 ]);
+                // 成功した場合（デバッグ確認用）
+                console.log('LINEへの自動投稿が成功しました！');
             } catch (msgErr) {
-                // sendMessagesが失敗してもメインの送信は完了させます
-                console.warn('LINEへの自動投稿に失敗しました:', msgErr);
+                // ❗エラーが起きた内容を画面に表示します（原因調査用）
+                alert('【デバッグ】LINEへの自動投稿でエラーが発生しました:\n' + msgErr.message || msgErr);
             }
+        } else {
+            // LINEアプリ以外から開いた場合（デバッグ確認用）
+            alert('【デバッグ】isInClient = false のため sendMessages はスキップしました');
         }
+
 
         // ── Step② 送信完了メッセージをポップアップで表示します ──────────────────
         alert('薬局への処方せん送信が完了しました！ 公式LINEにてお返事します！');
