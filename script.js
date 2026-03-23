@@ -90,10 +90,6 @@ uploadForm.addEventListener('submit', async function(event) {
     // ボタンを押した時の「画面が変わってしまう」のをストップさせます
     event.preventDefault();
 
-    // ❗ デバッグ：送信時のID・名前を確認します
-    alert(`【デバッグ】\nお名前：${lineUserName}\nユーザーID：${lineUserId || '（空っぽ！）'}\nisInClient：${liff.isInClient()}`);
-
-
     // 写真をかき集めます
     const filesArray = [
         document.getElementById('file1').files[0],
@@ -143,9 +139,7 @@ uploadForm.addEventListener('submit', async function(event) {
 
         // ── Step① LINEのトーク画面に「送信しました！」と自動で書き込みます ──────
         // ※これをすることで、薬剤師さんのスマホに「ピコン！」と通知が届きます。
-        const inClient = liff.isInClient();
-        if (inClient) {
-            // LINEアプリの中からアクセスしている場合のみ使えます
+        if (liff.isInClient()) {
             try {
                 await liff.sendMessages([
                     {
@@ -153,15 +147,10 @@ uploadForm.addEventListener('submit', async function(event) {
                         text: `【処方せん送信】\n${lineUserName}様から処方せん（${filesArray.length}枚）が届きました！\n準備ができましたらご連絡いたします。`
                     }
                 ]);
-                // 成功した場合（デバッグ確認用）
-                console.log('LINEへの自動投稿が成功しました！');
             } catch (msgErr) {
-                // ❗エラーが起きた内容を画面に表示します（原因調査用）
-                alert('【デバッグ】LINEへの自動投稿でエラーが発生しました:\n' + msgErr.message || msgErr);
+                // sendMessagesが失敗してもメインの送信は完了させます
+                console.warn('LINEへの自動投稿に失敗しました:', msgErr);
             }
-        } else {
-            // LINEアプリ以外から開いた場合（デバッグ確認用）
-            alert('【デバッグ】isInClient = false のため sendMessages はスキップしました');
         }
 
 
