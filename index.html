@@ -6,6 +6,9 @@
     <title>処方せん送信フォーム</title>
     <!-- お化粧ファイル（CSS）の読み込み -->
     <link rel="stylesheet" href="style.css">
+    <!-- LIFFのSDK（ライン公式のプログラム部品）を読み込みます -->
+    <!-- SDKとは「Software Development Kit」の略で、LINEが用意してくれた便利な道具箱のことです -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
     <!-- 画面全体を包む「柔らかいカード（白い箱）」 -->
@@ -16,6 +19,15 @@
             <!-- 追加していただいたマスコット画像を表示します -->
             <img src="マスコット　指さし２.png" alt="ご案内マスコット" class="mascot-img">
             <h1 class="form-title">処方せん<br>送信フォーム</h1>
+        </div>
+
+        <!-- LINEのお名前を表示するウェルカムメッセージ（最初は隠してあります） -->
+        <div id="welcomeMessage" style="display:none; text-align:center; padding:6px 0 2px; font-size:0.95rem; color:#027d45; font-weight:bold;">
+            👤 <span id="userName"></span>様、ようこそ！
+        </div>
+        <!-- LINEアプリ以外（パソコンブラウザ等）から開かれた場合の注意書き -->
+        <div id="notLiffMessage" style="display:none; text-align:center; padding:6px; font-size:0.85rem; color:#999;">
+            ※LINEアプリからこのフォームを開いてください。
         </div>
         
         <!-- 患者さんへの説明文（ここから） -->

@@ -1,69 +1,116 @@
 // ============================================
-// Googleドライブに写真を保存する小人さん（GASプログラム）です
+// Googleドライブに写真を保存＋薬局へLINE通知を送る小人さん（GASプログラム）
 // ============================================
 
-// Web画面から「これ保存して！」とデータが送られてきた時に動く特別な口（doPost）です
+// ============================================================
+// 🔑 設定エリア
+// ============================================================
+
+// LINEのBot（クローバー薬局Bot）のチャネルアクセストークン
+// これはプログラムがBotになりきってメッセージを送るための「許可証」です
+const LINE_CHANNEL_ACCESS_TOKEN = 'FZi49uBEagts6XA1ewmpt5NBsmHiVi9firJ8q8/tLnqFXJ7d2h9qsk9SwTIKp2hN/nm4p0QwkvwmY23KbRh9AEnJMbdGXPOv/PEWPUjijZfF3iN6X104vF2jF6jEIQ9/HwODqKz+9YOBmKtNimsyEwdB04t89/1O/w1cDnyilFU=';
+
+// ============================================================
+// Web画面から「これ保存して！」とデータが送られてきた時に動く口（doPost）
+// ============================================================
 function doPost(e) {
   try {
     // 1. 送られてきた情報を読み解きます
     var data = JSON.parse(e.postData.contents);
-    var images = data.images; // 送られてきた写真のリストです
-    
-    // 2. Googleドライブの中に保存先となる「専用の箱（フォルダ）」を作る（または探す）
-    var folderName = "処方せん受信トレイ"; // ←この名前のフォルダが一番上の階層に作られます
+    var images   = data.images;   // 写真のリスト
+    var userName = data.userName || '患者様'; // 送信した人のLINE表示名（例：「鈴木 一郎」）
+    var userId   = data.userId   || '';       // 送信した人のLINEユーザーID（返信用）
+
+    // 2. Googleドライブの保存先フォルダを探す（なければ作る）
+    var folderName = "処方せん受信トレイ";
     var folders = DriveApp.getFoldersByName(folderName);
     var targetFolder;
-    
     if (folders.hasNext()) {
-      targetFolder = folders.next(); // 既に「処方せん受信トレイ」があったらそれを使います
+      targetFolder = folders.next();
     } else {
-      targetFolder = DriveApp.createFolder(folderName); // なければ新しくフォルダを作ります
+      targetFolder = DriveApp.createFolder(folderName);
     }
-    
-    // 3. ファイルの名前に「送られた時間」をつけるための準備
+
+    // 3. ファイル名に時間とお名前を入れます
+    // 例：20260323_221500_鈴木一郎_1枚目.jpg
     var now = new Date();
-    // 例：20260321_123045 のような「年・月・日_時分秒」という名前を作ります
     var timeString = Utilities.formatDate(now, "Asia/Tokyo", "yyyyMMdd_HHmmss");
-    
-    // 4. 送られてきた写真を順番にドライブへ保存していきます
-    var savedUrls = []; // 保存した結果をメモする用のリスト
-    
+    // お名前をファイル名に使える形に整えます（スペースはアンダーバーに変換）
+    var safeUserName = userName.replace(/\s+/g, '_');
+
+    // 4. 送られてきた写真を順番にドライブへ保存します
+    var savedFileNames = [];
     for (var i = 0; i < images.length; i++) {
-      var imageInfo = images[i]; // i番目の写真
-      
-      // インターネットを通るために「Base64」という文字の羅列の暗号になっていたものを、元の写真データによみがえらせる魔法
+      var imageInfo = images[i];
       var byteCharacters = Utilities.base64Decode(imageInfo.base64Data);
-      
-      // 画像として名前をつけて組み立て直す
-      // （例： 20260321_123045_1枚目.jpg という名前になります）
-      var fileName = timeString + "_" + (i + 1) + "枚目" + getExtension(imageInfo.mimeType);
+      var fileName = timeString + "_" + safeUserName + "_" + (i + 1) + "枚目" + getExtension(imageInfo.mimeType);
       var blob = Utilities.newBlob(byteCharacters, imageInfo.mimeType, fileName);
-      
-      // ドライブの「処方せん受信トレイ」の中に、画像ファイルを作ります！
-      var file = targetFolder.createFile(blob);
-      savedUrls.push(file.getUrl()); // 保存したという印をメモ
+      targetFolder.createFile(blob);
+      savedFileNames.push(fileName);
     }
-    
-    // 5. Web画面の方へ「成功したよ！保存したよ！」とお返事を返します
+
+    // 5. 薬局のBotからユーザーへ「受付完了」の返信を送ります
+    // ※ userId が取得できた時だけ送ります
+    if (userId) {
+      sendLineReply(userId, userName, images.length);
+    }
+
+    // 6. 完了報告を返します
     return ContentService.createTextOutput(JSON.stringify({
-      "status": "success",
+      "status":  "success",
       "message": images.length + "枚の写真を保存しました！",
-      "urls": savedUrls
+      "files":   savedFileNames
     })).setMimeType(ContentService.MimeType.JSON);
-    
+
   } catch (error) {
-    // 失敗した時（エラー）は「失敗しちゃったよ」とお返事します
     return ContentService.createTextOutput(JSON.stringify({
-      "status": "error",
+      "status":  "error",
       "message": error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-// ファイルの種類（MIMEタイプ）から、最後につける名前「.jpg」や「.png」などを当てるおまじない
+
+// ============================================================
+// 💬 LINE Messaging API を使って患者さんへ返信を送る関数
+// ============================================================
+// 「プッシュメッセージ」とは、BotからLINEユーザーに能動的にメッセージを送る機能です
+function sendLineReply(userId, userName, imageCount) {
+  try {
+    var message = userName + '様、処方せん（' + imageCount + '枚）を受け付けました！\n' +
+                  'お薬の準備ができましたら、またご連絡いたします。\n' +
+                  'しばらくお待ちください🌿';
+
+    // LINEのサーバーに「このユーザーにメッセージを送ってください」とお願いします
+    var options = {
+      method:  'post',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + LINE_CHANNEL_ACCESS_TOKEN
+      },
+      payload: JSON.stringify({
+        to:       userId,   // 送り先のユーザーID
+        messages: [{ type: 'text', text: message }]
+      }),
+      muteHttpExceptions: true // エラーでもプログラムを止めないようにします
+    };
+
+    // LINEのAPIエンドポイント（お届け先の住所みたいなもの）
+    UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', options);
+
+  } catch (err) {
+    // 返信に失敗しても、写真保存のメインの処理には影響を与えません
+    Logger.log('LINE返信に失敗しました: ' + err.toString());
+  }
+}
+
+
+// ============================================================
+// ファイルの種類から拡張子（.jpgなど）を返す関数
+// ============================================================
 function getExtension(mimeType) {
   if (mimeType.indexOf("jpeg") !== -1 || mimeType.indexOf("jpg") !== -1) return ".jpg";
-  if (mimeType.indexOf("png") !== -1) return ".png";
-  if (mimeType.indexOf("heic") !== -1) return ".jpg"; // iPhoneの特殊な写真は、とりあえずjpgにしておきます
-  return ".jpg"; // よくわからなければ、一番代表的なjpgにします
+  if (mimeType.indexOf("png")  !== -1) return ".png";
+  if (mimeType.indexOf("heic") !== -1) return ".jpg";
+  return ".jpg";
 }

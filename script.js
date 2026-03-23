@@ -1,71 +1,111 @@
 // --- このファイルはWebページの「動き」をつくる脳みその役割を果たします ---
 
-/* 
- * 1. 写真が選ばれたら、ファイルの名前を画面に表示するお仕事 
- * （アップロードボタンの下に「〇〇.jpg」などと表示する機能です）
- */
+// ============================================================
+// 🔑 設定エリア（ここを変えると動きが変わります）
+// ============================================================
+
+// LIFFのID（LINEの管理画面で発行したもの）
+// LIFFとは「Line Front-end Framework」の略で、LINEの中でWebページを動かす仕組みです
+const LIFF_ID = '2009547237-ehwp3yLY';
+
+// GAS（Googleの小人さん）のURL
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrDzJYZBnkjpm3e-DTAlhKph8z3PJ5nt4F3X1M0269vDPBfv-AJ_0ZDtYh7CvLdoNdrQ/exec';
+
+// ============================================================
+// 📦 グローバル変数（プログラム全体で使う情報を入れておく箱）
+// ============================================================
+
+// 送信した人のLINE表示名（後でLIFFが取得して入れます）
+let lineUserName = '患者様';
+// 送信した人のLINEユーザーID（薬局からのメッセージ返信に使います）
+let lineUserId = '';
+
+
+// ============================================================
+// 🚀 LIFF初期化（ページが開いた時に一番最初に動きます）
+// ============================================================
+async function initLiff() {
+    try {
+        // LIFFを起動します（LINE側との接続を開始します）
+        await liff.init({ liffId: LIFF_ID });
+
+        if (liff.isLoggedIn()) {
+            // LINEにログイン済みの場合、プロフィール（名前など）を取得します
+            const profile = await liff.getProfile();
+            lineUserName = profile.displayName; // 例：「鈴木 一郎」
+            lineUserId   = profile.userId;       // 例：「Uabc123...」
+
+            // 画面に「〇〇様、ようこそ！」と表示します
+            document.getElementById('userName').textContent = lineUserName;
+            document.getElementById('welcomeMessage').style.display = 'block';
+
+        } else {
+            // ログインしていない場合はLINEのログイン画面へ飛ばします
+            liff.login();
+        }
+
+    } catch (err) {
+        // LINEアプリ以外（パソコンのブラウザなど）で開かれた場合
+        console.warn('LIFF初期化エラー（LINEアプリ以外から開かれた可能性あり）:', err);
+        // 「LINEアプリから開いてください」という案内を表示します
+        document.getElementById('notLiffMessage').style.display = 'block';
+    }
+}
+
+// ページが読み込まれた時にLIFFを起動します
+initLiff();
+
+
+// ============================================================
+// 1. 写真が選ばれたら、ファイルの名前を画面に表示するお仕事
+// ============================================================
 function setupFileChange(inputId, fileNameId) {
-    // 画面の中から、指定されたボタン（inputId）を探して持ってきます
     const fileInput = document.getElementById(inputId);
-    // 画面の中から、名前を表示する場所（fileNameId）を探して持ってきます
     const fileNameDisplay = document.getElementById(fileNameId);
 
-    // ボタンに変化があった時（写真が選ばれた時）に動く命令です
     fileInput.addEventListener('change', function() {
-        // もし写真が1枚以上選ばれていたら
         if (fileInput.files.length > 0) {
-            // そのファイルの名前を取り出して、画面に表示します
             fileNameDisplay.textContent = '選んだ写真：' + fileInput.files[0].name;
-            fileNameDisplay.style.color = '#0056b3'; // 文字を青色にして目立つようにします
+            fileNameDisplay.style.color = '#0056b3';
         } else {
-            // 選ばれていない時（キャンセルした時）は、文字を消します
             fileNameDisplay.textContent = '';
         }
     });
 }
 
-// 5つのボタンそれぞれに、上記の「ファイルの名前を表示するお仕事」をお願いします
-setupFileChange('file1', 'fileName1'); // 画像1のボタン用
-setupFileChange('file2', 'fileName2'); // 画像2のボタン用
-setupFileChange('file3', 'fileName3'); // 画像3のボタン用
-setupFileChange('file4', 'fileName4'); // 画像4のボタン用
-setupFileChange('file5', 'fileName5'); // 画像5のボタン用
+// 5つのボタンそれぞれに設定します
+setupFileChange('file1', 'fileName1');
+setupFileChange('file2', 'fileName2');
+setupFileChange('file3', 'fileName3');
+setupFileChange('file4', 'fileName4');
+setupFileChange('file5', 'fileName5');
 
-/* 
- * 2. 「送信する」ボタンが押された時のお仕事
- * （あとでGoogleドライブへ送るための準備です）
- */
+
+// ============================================================
+// 2. 「送信する」ボタンが押された時のお仕事
+// ============================================================
 const uploadForm = document.getElementById('uploadForm');
 
-// 💡 ここに、後でGASで発行したURLを貼り付けます！
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyEZyf4kBHgVPWyvUpJ-MP2l0FXxcVNKhjErV3Z_kkDNHbc726JNqNPJ2ZLeI3K9mhBLA/exec'; 
-
 uploadForm.addEventListener('submit', async function(event) {
-    // ボタンを押すと画面が変わってしまう（元のルール）のをストップさせます
+    // ボタンを押した時の「画面が変わってしまう」のをストップさせます
     event.preventDefault();
 
-    // 写真の枠（file1〜file5）から、選ばれた写真をかき集めます
+    // 写真をかき集めます
     const filesArray = [
         document.getElementById('file1').files[0],
         document.getElementById('file2').files[0],
         document.getElementById('file3').files[0],
         document.getElementById('file4').files[0],
         document.getElementById('file5').files[0]
-    ].filter(file => file !== undefined); // カラっぽの枠は除外します
+    ].filter(file => file !== undefined); // 空の枠は除外します
 
     // 1枚も選ばれていなかったらストップします
     if (filesArray.length === 0) {
         alert('処方せんの画像は必ず1枚以上は選んでください！');
-        return; 
-    }
-
-    // もしGAS_URLがまだ設定されていなかったら、ここで「おためし」としてストップ
-    if (GAS_URL === 'GASのURLをここに入れます') {
-        alert('準備完了まであと一歩！\n（裏側の設定がまだ終わっていないので、安全のためここでストップします）\n\n・選んだ画像の枚数: ' + filesArray.length + '枚');
         return;
     }
 
-    // 送信ボタンを消して、「送信中...」というメッセージに切り替えます
+    // 送信ボタンを隠して「送信中...」表示に切り替えます
     document.getElementById('submitBtn').style.display = 'none';
     document.getElementById('loadingMessage').style.display = 'block';
 
@@ -75,55 +115,76 @@ uploadForm.addEventListener('submit', async function(event) {
         for (let i = 0; i < filesArray.length; i++) {
             const file = filesArray[i];
             const base64String = await convertFileToBase64(file);
-            
-            // パソコン用のくっついているタグ "data:image/jpeg;base64,....." という形から、純粋な暗号部分 "....." だけを取り出します
-            const base64Data = base64String.split(',')[1]; 
-            
+            const base64Data = base64String.split(',')[1];
             imagesData.push({
-                mimeType: file.type, // image/jpeg など
-                base64Data: base64Data // 暗号の本体
+                mimeType: file.type,
+                base64Data: base64Data
             });
         }
 
-        // ガス（GAS）の小人さんに送るための「手紙セット」を作ります
+        // GAS（小人さん）に送るための「手紙セット」を作ります
+        // ここにLINEの表示名（名前）とユーザーIDも一緒に入れます！
         const payload = {
-            images: imagesData
+            images:   imagesData,
+            userName: lineUserName, // 例：「鈴木 一郎」
+            userId:   lineUserId    // 例：「Uabc123...」（薬局からの返信に使います）
         };
 
-        // GASのURLに手紙（データ）を投げ落とします
+        // GASのURLに手紙（データ）を投げます
         await fetch(GAS_URL, {
             method: 'POST',
-            mode: 'no-cors', // 💡追加：パソコンのファイルから直接通信する際のエラー（CORS）を回避する裏技です
-            body: JSON.stringify(payload)
+            mode:   'no-cors', // CORSエラーを回避するための設定です
+            body:   JSON.stringify(payload)
         });
 
-        // 💡no-corsを指定した場合、セキュリティの都合でGASからの「成功しました！」というお返事を受け取れません。
-        // なので、エラーにならずにこの行まで来た ＝ 「無事にインターネットに飛んで行った！」と判断して完了させます。
+        // ── Step① LINEのトーク画面に「送信しました！」と自動で書き込みます ──────
+        // ※これをすることで、薬剤師さんのスマホに「ピコン！」と通知が届きます。
+        // liff.sendMessages() は「患者さんのトーク画面に代わりに一言投稿する」機能です。
+        if (liff.isInClient()) {
+            // LINEアプリの中からアクセスしている場合のみ使えます
+            try {
+                await liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: `【処方せん送信】\n${lineUserName}様から処方せん（${filesArray.length}枚）が届きました！\n準備ができましたらご連絡いたします。`
+                    }
+                ]);
+            } catch (msgErr) {
+                // sendMessagesが失敗してもメインの送信は完了させます
+                console.warn('LINEへの自動投稿に失敗しました:', msgErr);
+            }
+        }
+
+        // ── Step② 送信完了メッセージをポップアップで表示します ──────────────────
         alert('薬局への処方せん送信が完了しました！ 公式LINEにてお返事します！');
-        
-        uploadForm.reset(); // フォームを空っぽにします
-        // 画面の「選んだ写真：〇〇」という文字も消します
-        for(let i=1; i<=5; i++) {
-            document.getElementById('fileName'+i).textContent = '';
+
+        // フォームをリセットして空っぽに戻します
+        uploadForm.reset();
+        for (let i = 1; i <= 5; i++) {
+            document.getElementById('fileName' + i).textContent = '';
         }
 
     } catch (error) {
-        // インターネットが繋がっていなかったり、飛んでる最中に途切れた時のエラー
+        // 通信エラー時の処理
         console.error('通信エラー:', error);
         alert('通信エラーが起きました。電波の良いところで再度お試しください。');
+
     } finally {
-        // 成功しても失敗しても、ボタンを出して画面を元の状態に戻します
+        // 成功しても失敗しても、ボタンを元に戻します
         document.getElementById('submitBtn').style.display = 'block';
         document.getElementById('loadingMessage').style.display = 'none';
     }
 });
 
-// ファイルを「文字（Base64という暗号）」に変換する魔法の関数（裏方の作業員）です
+
+// ============================================================
+// ファイルを「文字（Base64）」に変換する裏方の関数
+// ============================================================
 function convertFileToBase64(file) {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader(); // ファイルを読み込む機械
-        reader.readAsDataURL(file); // 文字にして読み込むスイッチ
-        reader.onload = () => resolve(reader.result); // 終わったら報告
-        reader.onerror = error => reject(error); // しくじったら報告
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload  = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
     });
 }
