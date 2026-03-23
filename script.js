@@ -9,7 +9,7 @@
 const LIFF_ID = '2009547237-ehwp3yLY';
 
 // GAS（Googleの小人さん）のURL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrDzJYZBnkjpm3e-DTAlhKph8z3PJ5nt4F3X1M0269vDPBfv-AJ_0ZDtYh7CvLdoNdrQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwxzxzgA_blzzbe6-Vl-YV--8Nqw-hOl1mnUGGnfn961OsI8Nj1Sz2PslcGR3OtRNWJ2A/exec';
 
 // ============================================================
 // 📦 グローバル変数（プログラム全体で使う情報を入れておく箱）
