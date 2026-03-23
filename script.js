@@ -90,6 +90,10 @@ uploadForm.addEventListener('submit', async function(event) {
     // ボタンを押した時の「画面が変わってしまう」のをストップさせます
     event.preventDefault();
 
+    // ❗ デバッグ：送信時のID・名前を確認します
+    alert(`【デバッグ】\nお名前：${lineUserName}\nユーザーID：${lineUserId || '（空っぽ！）'}\nisInClient：${liff.isInClient()}`);
+
+
     // 写真をかき集めます
     const filesArray = [
         document.getElementById('file1').files[0],
