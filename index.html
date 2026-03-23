@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>処方せん送信フォーム</title>
+    <!-- お化粧ファイル（CSS）の読み込み -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 画面全体を包む「柔らかいカード（白い箱）」 -->
+    <div class="container">
+        
+        <!-- ヘッダー部分：マスコットとタイトルを横に並べる場所 -->
+        <div class="header-section">
+            <!-- 追加していただいたマスコット画像を表示します -->
+            <img src="マスコット　指さし２.png" alt="ご案内マスコット" class="mascot-img">
+            <h1 class="form-title">処方せん<br>送信フォーム</h1>
+        </div>
+        
+        <!-- 患者さんへの説明文（ここから） -->
+        <div class="info-card">
+            <p class="description bold">こちらからお手持ちの処方せんを撮影して、お送りください。</p>
+            <p class="attention">
+                ※処方せん全体がハッキリ写るように撮影をお願いします。
+            </p>
+        </div>
+        <!-- 患者さんへの説明文（ここまで） -->
+
+        <!-- 良い写真・悪い写真の例 -->
+        <div class="example-images">
+            <div class="example good">
+                <!-- 「OKの例」というバッジ（シール）をつけます -->
+                <span class="badge good-badge">OKの例</span>
+                <!-- ここに shohousen.jpg を表示し、赤〇を重ねます -->
+                <div class="example-img-wrapper">
+                    <img src="shohousen.jpg" alt="良い例">
+                    <div class="mark-circle"></div>
+                </div>
+            </div>
+            <div class="example bad">
+                <!-- 「NGの例」というバッジをつけます -->
+                <span class="badge bad-badge">NGの例</span>
+                <!-- お薬の部分だけをズームして表示し、赤×を重ねます -->
+                <div class="example-img-wrapper cropped">
+                    <img src="shohousen.jpg" alt="悪い例" class="zoom-medicine">
+                    <div class="mark-cross"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 写真を選んで送信するための入力フォーム -->
+        <form id="uploadForm">
+            
+            <!-- 1枚目の写真を選ぶ場所（必須） -->
+            <div class="upload-section">
+                <label>処方せん画像 1 <span class="required">（必須）</span></label>
+                <!-- 見えない本物のボタン -->
+                <input type="file" id="file1" accept="image/*" class="hidden-input">
+                <!-- カスタマイズした専用ボタン（カメラのアイコン付き） -->
+                <button type="button" class="upload-btn" onclick="document.getElementById('file1').click()">
+                    <span class="icon">📷</span> 写真を選ぶ（1枚目）
+                </button>
+                <!-- 選んだ写真の名前が出る場所（最初は空っぽ） -->
+                <p id="fileName1" class="file-name"></p>
+            </div>
+
+            <!-- 2枚目の写真を選ぶ場所 -->
+            <div class="upload-section">
+                <label>処方せん画像 2</label>
+                <input type="file" id="file2" accept="image/*" class="hidden-input">
+                <button type="button" class="upload-btn" onclick="document.getElementById('file2').click()">
+                    <span class="icon">➕</span> 追加の写真を選ぶ（2枚目）
+                </button>
+                <p id="fileName2" class="file-name"></p>
+            </div>
+
+            <!-- 3枚目の写真を選ぶ場所 -->
+            <div class="upload-section">
+                <label>処方せん画像 3</label>
+                <input type="file" id="file3" accept="image/*" class="hidden-input">
+                <button type="button" class="upload-btn" onclick="document.getElementById('file3').click()">
+                    <span class="icon">➕</span> 追加の写真を選ぶ（3枚目）
+                </button>
+                <p id="fileName3" class="file-name"></p>
+            </div>
+
+            <!-- 4枚目の写真を選ぶ場所 -->
+            <div class="upload-section">
+                <label>処方せん画像 4</label>
+                <input type="file" id="file4" accept="image/*" class="hidden-input">
+                <button type="button" class="upload-btn" onclick="document.getElementById('file4').click()">
+                    <span class="icon">➕</span> 追加の写真を選ぶ（4枚目）
+                </button>
+                <p id="fileName4" class="file-name"></p>
+            </div>
+
+            <!-- 5枚目の写真を選ぶ場所 -->
+            <div class="upload-section">
+                <label>処方せん画像 5</label>
+                <input type="file" id="file5" accept="image/*" class="hidden-input">
+                <button type="button" class="upload-btn" onclick="document.getElementById('file5').click()">
+                    <span class="icon">➕</span> 追加の写真を選ぶ（5枚目）
+                </button>
+                <p id="fileName5" class="file-name"></p>
+            </div>
+
+            <!-- 送信ボタン -->
+            <button type="submit" class="submit-btn" id="submitBtn">送信する</button>
+
+            <!-- 送信中のお知らせ（最初は隠してあります） -->
+            <div id="loadingMessage" class="loading-message" style="display: none;">
+                <p class="spinner">↻</p>
+                <p>安全に送信しています...<br>（このままお待ちください）</p>
+            </div>
+        </form>
+    </div>
+
+    <!-- 動きを入れるJavaScriptの読み込み -->
+    <script src="script.js"></script>
+</body>
+</html>

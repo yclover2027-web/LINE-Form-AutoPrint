@@ -1,0 +1,316 @@
+/* ==============================
+   全体の基本設定（背景など）
+   ============================== */
+body {
+    /* 読みやすいシンプルな文字の形にします */
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    margin: 0;
+    padding: 0;
+    /* 背景を白から薄い緑色（#87D2AA系）へフワッと変わる「グラデーション」にして、柔らかさを出します */
+    background: linear-gradient(135deg, #f0fdf7, #dcf5e9);
+    color: #4a4a4a; /* 文字の色は真黒ではなく、少し柔らかいダークグレーに */
+    min-height: 100vh;
+}
+
+/* ==============================
+   メインのカード（白い箱）
+   ============================== */
+.container {
+    background-color: #ffffff;
+    max-width: 450px; /* ちょっとだけ幅を広げます */
+    margin: 30px auto; /* 画面の上下左右の真ん中あたりに配置 */
+    padding: 30px 25px;
+    border-radius: 20px; /* 角を大胆に丸くして、今風のアプリのように優しくします */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05); /* ふわっとした影をつけて、浮かんでいるように見せます */
+    box-sizing: border-box;
+}
+
+/* ==============================
+   ヘッダー部分（マスコットとタイトル）
+   ============================== */
+.header-section {
+    display: flex; /* 横に並べるおまじない */
+    align-items: center; /* 縦の位置を真ん中で揃えます */
+    justify-content: center; /* 横の位置を真ん中で揃えます */
+    margin-bottom: 25px;
+    gap: 15px; /* マスコットと文字の間に少しスキマを作ります */
+}
+
+/* マスコット画像の設定 */
+.mascot-img {
+    width: 90px; /* マスコットの大きさを調整します */
+    height: auto;
+}
+
+/* タイトル文字の設定 */
+.form-title {
+    color: #1c5236; /* クローバー薬局さんを意識した、濃く落ち着いた緑色 */
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+/* ==============================
+   説明文を入れる薄い色の箱
+   ============================== */
+.info-card {
+    background-color: #f7fcf9; /* すごく薄い緑色で塗りつぶします */
+    border-left: 5px solid #87D2AA; /* 左側にだけ、ご指定のカラー（#87D2AA）の線を引いてアクセントにします */
+    padding: 15px;
+    border-radius: 8px; /* 箱の角を少し丸くします */
+    margin-bottom: 25px;
+}
+
+p {
+    line-height: 1.6; /* 行間（文字のスキマ）をあけて読みやすくします */
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+p:last-child {
+    margin-bottom: 0;
+}
+
+.bold {
+    font-weight: bold; /* 太字 */
+}
+
+.red-text {
+    color: #e63946; /* 注意書きに使う、少し明るい赤色 */
+}
+
+/* ==============================
+   お手本画像（良い例・悪い例）
+   ============================== */
+.example-images {
+    display: flex;
+    justify-content: space-between;
+    margin: 25px 0;
+    align-items: stretch; /* 2つの画像の高さをピッタリ揃えます */
+}
+
+.example {
+    width: 47%;
+    position: relative; /* バッジ（シール）を貼り付けるための下準備です */
+    border-radius: 12px;
+    background-color: #f7fcf9; /* 画像が見つからない時用の優しい背景色 */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* 写真にも少し影をつけます */
+}
+
+/* 画像を包む透明な箱 */
+.example-img-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%; /* 高さを外側の箱（インデックス）に合わせます */
+    border-radius: 12px;
+    overflow: hidden; /* 画像が角の丸みからはみ出さないようにガードします */
+    line-height: 0; /* 余分なスキマをなくすおまじないです */
+}
+
+.example img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ==============================
+   NG例（お薬部分ズーム）の設定
+   ============================== */
+.example-img-wrapper.cropped {
+    position: absolute; /* OK画像と同じ高さに無理やり合わせます */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.zoom-medicine {
+    /* 保険（右側）や日数（右側）を除外するため、思い切りズーム（180%）します */
+    width: 200% !important; 
+    /* 左寄り（-5%）にしつつ、名前と薬が見える位置（-15%）に上下を調整します */
+    transform: translate(-3%, -18%); 
+}
+
+/* ==============================
+   赤〇と赤×の設定
+   ============================== */
+/* 〇も×も「全く同じサイズ・全く同じ線の太さ」にして統一感を出します */
+.mark-circle, .mark-cross {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 枠のど真ん中に配置します */
+    width: 90px;
+    height: 90px;
+    pointer-events: none; /* マウスのジャマにならないようにします */
+    z-index: 10; /* 画像より上に表示されるようにします */
+}
+
+.mark-circle {
+    border: 10px solid #e63946; /* スパッと明るい赤色の線（太さ10px） */
+    border-radius: 50%; /* 正円にします */
+}
+
+.mark-cross::before, .mark-cross::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 40px; /* 真ん中（90pxの半分 - 線の太さの半分） */
+    width: 10px; /* バツの線の太さ（〇の線と同じ10px） */
+    height: 90px; /* 長さも90pxで円のサイズと統一 */
+    background-color: #e63946; /* ばつ印の色 */
+    border-radius: 5px; /* 線を少し丸くします */
+}
+.mark-cross::before {
+    transform: rotate(45deg); /* ナナメに倒します */
+}
+.mark-cross::after {
+    transform: rotate(-45deg); /* 反対にナナメに倒します */
+}
+
+/* ==============================
+   OKとNGのバッジ（シール）の設定
+   ============================== */
+.badge {
+    position: absolute; /* .exampleの左上にピタッとくっつけます */
+    top: 5px;
+    left: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.good-badge {
+    background-color: #87D2AA; /* OKはご指定カラー（緑） */
+}
+
+.bad-badge {
+    background-color: #e63946; /* NGは赤色に */
+}
+
+/* ==============================
+   写真をアップロードする部分
+   ============================== */
+.upload-section {
+    margin-bottom: 25px;
+    background-color: #ffffff;
+    border: 2px dashed #cfe8dc; /* 枠線を「点線」にして「ここになにか入れるよ」とアピールします */
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center; /* 中の文字やボタンを真ん中によせます */
+    transition: 0.3s; /* マウスを乗せた時の色変わりをフワッとさせます */
+}
+
+/* マウスが上に来たら、点線の色を濃くします */
+.upload-section:hover {
+    border-color: #87D2AA;
+    background-color: #f9fdfa;
+}
+
+.upload-section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #2c6347; /* 濃い緑の文字 */
+}
+
+.required {
+    color: #e63946;
+    font-size: 14px;
+}
+
+.hidden-input {
+    display: none; /* 本物のファイル選択ボタンは隠します */
+}
+
+/* オシャレなアップロードボタンの設定 */
+.upload-btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background-color: #ffffff;
+    color: #4a4a4a;
+    border: 2px solid #87D2AA; /* ご指定カラーの枠線 */
+    border-radius: 30px; /* カプセルのような丸い形に */
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 2px 5px rgba(135, 210, 170, 0.2);
+}
+
+/* ボタンにマウスが乗ったら、緑色で塗りつぶします */
+.upload-btn:hover {
+    background-color: #87D2AA;
+    color: #ffffff;
+}
+
+.file-name {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #2c6347;
+    font-weight: bold;
+}
+
+/* ==============================
+   一番下の送信ボタン
+   ============================== */
+.submit-btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #87D2AA, #6bb891); /* 少しリッチに見える「グラデーション」の緑にしています */
+    color: white;
+    border: none;
+    border-radius: 30px; /* 丸いボタンに */
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 35px;
+    box-shadow: 0 6px 15px rgba(107, 184, 145, 0.4);
+    transition: 0.3s;
+}
+
+/* 送信ボタンにホバー（触れた）時の動き */
+.submit-btn:hover {
+    transform: translateY(-2px); /* ほんの少しだけ上に「浮き上がる」ような動きをつけます */
+    box-shadow: 0 8px 20px rgba(107, 184, 145, 0.5); /* 浮き上がった分、影を大きくします */
+}
+
+/* ==============================
+   送ってますよー、というアニメーション（おまけ）
+   ============================== */
+.loading-message {
+    text-align: center;
+    color: #2c6347;
+    margin-top: 30px;
+    font-weight: bold;
+}
+
+.spinner {
+    font-size: 30px;
+    animation: spin 1s linear infinite; /* 延々とくるくる回る命令です */
+    margin: 0;
+    color: #87D2AA;
+}
+
+/* くるくる回すためのルール（0%から100%になる間に360度回転する） */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==============================
+   スマホのような小さな画面で見た時のお約束
+   ============================== */
+@media screen and (max-width: 480px) {
+    .container {
+        /* スマホの時は、白い箱が画面いっぱいに広がるように（余白や角の丸みをなくす）調整します */
+        margin: 0;
+        border-radius: 0; 
+        min-height: 100vh;
+    }
+}
