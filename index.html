@@ -69,8 +69,9 @@
                 <label>処方せん画像 1 <span class="required">（必須）</span></label>
                 <!-- 見えない本物のボタン（アルバムから選ぶ用） -->
                 <input type="file" id="file1" accept="image/*" class="hidden-input">
-                <!-- ボタンを横に並べるエリア -->
-                <div class="btn-group">
+                
+                <!-- Android用ボタン（アルバムとカメラの２つ） -->
+                <div class="btn-group" id="android-btns-1">
                     <!-- アルバムから選ぶボタン -->
                     <button type="button" class="upload-btn" onclick="document.getElementById('file1').click()">
                         <span class="icon">🖼️</span> アルバムから選ぶ
@@ -80,15 +81,35 @@
                         <span class="icon">📷</span> カメラで撮影
                     </button>
                 </div>
+
+                <!-- iPhone(iOS)用ボタン（写真を選ぶ１つだけ） -->
+                <div class="btn-group" id="ios-btns-1" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file1').click()" style="width: 100%;">
+                        <span class="icon">📷</span> 写真を選ぶ
+                    </button>
+                </div>
+
                 <!-- 選んだ写真の名前が出る場所（最初は空っぽ） -->
                 <p id="fileName1" class="file-name"></p>
+
+                <!-- Android用 プレビュー画面（最初は隠しておく） -->
+                <div id="previewArea1" class="preview-area" style="display: none;">
+                    <p class="preview-title">選んだ写真の確認</p>
+                    <img id="previewImg1" class="preview-image" src="" alt="プレビュー">
+                    <br>
+                    <button type="button" class="redo-btn" onclick="resetSlot(1)">
+                        <span class="icon">❌</span> 選び直す
+                    </button>
+                </div>
             </div>
 
             <!-- 2枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 2</label>
                 <input type="file" id="file2" accept="image/*" class="hidden-input">
-                <div class="btn-group">
+                
+                <!-- Android用ボタン -->
+                <div class="btn-group" id="android-btns-2">
                     <button type="button" class="upload-btn" onclick="document.getElementById('file2').click()">
                         <span class="icon">🖼️</span> アルバムから選ぶ
                     </button>
@@ -96,14 +117,34 @@
                         <span class="icon">📷</span> カメラで撮影
                     </button>
                 </div>
+
+                <!-- iPhone(iOS)用ボタン -->
+                <div class="btn-group" id="ios-btns-2" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file2').click()" style="width: 100%;">
+                        <span class="icon">📷</span> 写真を選ぶ
+                    </button>
+                </div>
+
                 <p id="fileName2" class="file-name"></p>
+
+                <!-- Android用 プレビュー画面 -->
+                <div id="previewArea2" class="preview-area" style="display: none;">
+                    <p class="preview-title">選んだ写真の確認</p>
+                    <img id="previewImg2" class="preview-image" src="" alt="プレビュー">
+                    <br>
+                    <button type="button" class="redo-btn" onclick="resetSlot(2)">
+                        <span class="icon">❌</span> 選び直す
+                    </button>
+                </div>
             </div>
 
             <!-- 3枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 3</label>
                 <input type="file" id="file3" accept="image/*" class="hidden-input">
-                <div class="btn-group">
+                
+                <!-- Android用ボタン -->
+                <div class="btn-group" id="android-btns-3">
                     <button type="button" class="upload-btn" onclick="document.getElementById('file3').click()">
                         <span class="icon">🖼️</span> アルバムから選ぶ
                     </button>
@@ -111,14 +152,34 @@
                         <span class="icon">📷</span> カメラで撮影
                     </button>
                 </div>
+
+                <!-- iPhone(iOS)用ボタン -->
+                <div class="btn-group" id="ios-btns-3" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file3').click()" style="width: 100%;">
+                        <span class="icon">📷</span> 写真を選ぶ
+                    </button>
+                </div>
+
                 <p id="fileName3" class="file-name"></p>
+
+                <!-- Android用 プレビュー画面 -->
+                <div id="previewArea3" class="preview-area" style="display: none;">
+                    <p class="preview-title">選んだ写真の確認</p>
+                    <img id="previewImg3" class="preview-image" src="" alt="プレビュー">
+                    <br>
+                    <button type="button" class="redo-btn" onclick="resetSlot(3)">
+                        <span class="icon">❌</span> 選び直す
+                    </button>
+                </div>
             </div>
 
             <!-- 4枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 4</label>
                 <input type="file" id="file4" accept="image/*" class="hidden-input">
-                <div class="btn-group">
+                
+                <!-- Android用ボタン -->
+                <div class="btn-group" id="android-btns-4">
                     <button type="button" class="upload-btn" onclick="document.getElementById('file4').click()">
                         <span class="icon">🖼️</span> アルバムから選ぶ
                     </button>
@@ -126,14 +187,34 @@
                         <span class="icon">📷</span> カメラで撮影
                     </button>
                 </div>
+
+                <!-- iPhone(iOS)用ボタン -->
+                <div class="btn-group" id="ios-btns-4" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file4').click()" style="width: 100%;">
+                        <span class="icon">📷</span> 写真を選ぶ
+                    </button>
+                </div>
+
                 <p id="fileName4" class="file-name"></p>
+
+                <!-- Android用 プレビュー画面 -->
+                <div id="previewArea4" class="preview-area" style="display: none;">
+                    <p class="preview-title">選んだ写真の確認</p>
+                    <img id="previewImg4" class="preview-image" src="" alt="プレビュー">
+                    <br>
+                    <button type="button" class="redo-btn" onclick="resetSlot(4)">
+                        <span class="icon">❌</span> 選び直す
+                    </button>
+                </div>
             </div>
 
             <!-- 5枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 5</label>
                 <input type="file" id="file5" accept="image/*" class="hidden-input">
-                <div class="btn-group">
+                
+                <!-- Android用ボタン -->
+                <div class="btn-group" id="android-btns-5">
                     <button type="button" class="upload-btn" onclick="document.getElementById('file5').click()">
                         <span class="icon">🖼️</span> アルバムから選ぶ
                     </button>
@@ -141,7 +222,25 @@
                         <span class="icon">📷</span> カメラで撮影
                     </button>
                 </div>
+
+                <!-- iPhone(iOS)用ボタン -->
+                <div class="btn-group" id="ios-btns-5" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file5').click()" style="width: 100%;">
+                        <span class="icon">📷</span> 写真を選ぶ
+                    </button>
+                </div>
+
                 <p id="fileName5" class="file-name"></p>
+
+                <!-- Android用 プレビュー画面 -->
+                <div id="previewArea5" class="preview-area" style="display: none;">
+                    <p class="preview-title">選んだ写真の確認</p>
+                    <img id="previewImg5" class="preview-image" src="" alt="プレビュー">
+                    <br>
+                    <button type="button" class="redo-btn" onclick="resetSlot(5)">
+                        <span class="icon">❌</span> 選び直す
+                    </button>
+                </div>
             </div>
 
             <!-- 送信ボタン -->

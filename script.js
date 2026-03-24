@@ -67,6 +67,72 @@ initLiff();
 
 
 // ============================================================
+// 📱 スマホの種類（OS）を判定してボタンを切り替えるお仕事
+// ============================================================
+// iPhone（iOS）からのアクセスかどうかをチェックします
+const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+
+function switchButtonsByOS() {
+    for (let i = 1; i <= 5; i++) {
+        const androidBtns = document.getElementById('android-btns-' + i);
+        const iosBtns = document.getElementById('ios-btns-' + i);
+        
+        if (isIOS) {
+            // iPhoneならiPhone用ボタンだけを見せます
+            if (androidBtns) androidBtns.style.display = 'none';
+            if (iosBtns) iosBtns.style.display = 'flex';
+        } else {
+            // Androidやパソコンならそのまま（Android用ボタン）を見せます
+            if (androidBtns) androidBtns.style.display = 'flex';
+            if (iosBtns) iosBtns.style.display = 'none';
+        }
+    }
+}
+// ページを開いたらすぐにボタンを切り替えます
+switchButtonsByOS();
+
+// ============================================================
+// 🖼️ プレビュー（確認画面）を表示するお仕事
+// ============================================================
+function showPreview(file, slotNumber) {
+    // iPhoneの場合はプレビューを出さずに終わり（標準カメラアプリで確認できるため）
+    if (isIOS) return;
+
+    const previewArea = document.getElementById('previewArea' + slotNumber);
+    const previewImg = document.getElementById('previewImg' + slotNumber);
+    const androidBtns = document.getElementById('android-btns-' + slotNumber);
+
+    // 画像ファイルを読み込んで画面に表示するための準備
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewImg.src = e.target.result; // 画像データをセット
+        previewArea.style.display = 'block'; // プレビュー画面を表示
+        if (androidBtns) androidBtns.style.display = 'none'; // ボタンは隠す
+    };
+    reader.readAsDataURL(file); // 画像の読み込みスタート
+}
+
+// ============================================================
+// ❌ 選び直す（リセット）のお仕事
+// ============================================================
+function resetSlot(slotNumber) {
+    // ファイルの中身を空っぽにする
+    const fileInput = document.getElementById('file' + slotNumber);
+    fileInput.value = ''; 
+    cameraFiles[slotNumber - 1] = null; // カメラの箱も空に
+    
+    // 名前やプレビューを消す
+    document.getElementById('fileName' + slotNumber).textContent = '';
+    document.getElementById('previewArea' + slotNumber).style.display = 'none';
+    document.getElementById('previewImg' + slotNumber).src = '';
+    
+    // ボタンをまた見えるようにする
+    if (!isIOS) {
+        document.getElementById('android-btns-' + slotNumber).style.display = 'flex';
+    }
+}
+
+// ============================================================
 // 1. 写真が選ばれたら、ファイルの名前を画面に表示するお仕事
 // ============================================================
 function setupFileChange(inputId, fileNameId, slotIndex) {
@@ -75,10 +141,14 @@ function setupFileChange(inputId, fileNameId, slotIndex) {
 
     fileInput.addEventListener('change', function() {
         if (fileInput.files.length > 0) {
-            fileNameDisplay.textContent = '選んだ写真：' + fileInput.files[0].name;
+            const selectedFile = fileInput.files[0];
+            fileNameDisplay.textContent = '選んだ写真：' + selectedFile.name;
             fileNameDisplay.style.color = '#0056b3';
             // アルバムから写真を選び直した場合、カメラの写真は上書きされるのでクリア
             cameraFiles[slotIndex] = null;
+
+            // ★Android用にプレビューを表示します
+            showPreview(selectedFile, slotIndex + 1);
         } else {
             fileNameDisplay.textContent = '';
         }
@@ -183,6 +253,9 @@ function takePhoto() {
         fileNameDisplay.textContent = '📷 撮影した写真：' + fileName;
         fileNameDisplay.style.color = '#e6a23c';
 
+        // ★Android用にプレビューを表示します
+        showPreview(file, currentCameraSlot);
+
         // カメラを閉じます
         closeCamera();
 
@@ -277,6 +350,13 @@ uploadForm.addEventListener('submit', async function(event) {
         uploadForm.reset();
         for (let i = 1; i <= 5; i++) {
             document.getElementById('fileName' + i).textContent = '';
+            // ★プレビュー表示も元に戻します
+            document.getElementById('previewArea' + i).style.display = 'none';
+            document.getElementById('previewImg' + i).src = '';
+            if (!isIOS) {
+                const androidBtns = document.getElementById('android-btns-' + i);
+                if (androidBtns) androidBtns.style.display = 'flex';
+            }
         }
         // カメラ写真の保管箱もクリアします
         cameraFiles = [null, null, null, null, null];

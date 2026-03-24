@@ -417,3 +417,53 @@ p:last-child {
         min-height: 100vh;
     }
 }
+
+/* ==============================
+   📸 プレビュー画面（Android用）の設定
+   ============================== */
+.preview-area {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f7fcf9; /* 優しい背景色でまとめます */
+    border-radius: 10px;
+    border: 1px solid #cfe8dc;
+    text-align: center; /* プレビュー写真とボタンを真ん中によせます */
+}
+
+.preview-title {
+    font-size: 14px;
+    color: #2c6347; /* 薬局さんのイメージカラー（濃い緑） */
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.preview-image {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    border-radius: 8px; /* 角をほんのり丸くしてなじませます */
+    display: block;
+    margin: 0 auto 15px auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* 軽く影をつけて浮かび上がらせます */
+}
+
+/* 選び直す（リセット）ボタンの設定 */
+.redo-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    color: #e63946; /* 注意を引く赤色 */
+    border: 2px solid #e63946;
+    border-radius: 30px; /* カプセルのような丸い形に */
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 2px 5px rgba(230, 57, 70, 0.2);
+}
+
+/* 選び直すボタンにホバー（触れた）時の動き */
+.redo-btn:hover {
+    background-color: #e63946;
+    color: #ffffff;
+}
