@@ -130,21 +130,15 @@ uploadForm.addEventListener('submit', async function(event) {
             userId:   lineUserId    // 例：「Uabc123...」（薬局からの返信に使います）
         };
 
-        // GASのURLに手紙（データ）を投げます
-        await fetch(GAS_URL, {
-            method: 'POST',
-            mode:   'no-cors', // CORSエラーを回避するための設定です
-            body:   JSON.stringify(payload)
-        });
-
         // ── Step① LINEのトーク画面に「送信しました！」と自動で書き込みます ──────
         // ※これをすることで、薬剤師さんのスマホに「ピコン！」と通知が届きます。
+        // ※GASの処理（保存等）より前に実行することで、順番を確実にします。
         if (liff.isInClient()) {
             try {
                 await liff.sendMessages([
                     {
                         type: 'text',
-                        text: `【処方せん送信】\n${lineUserName}様から処方せん（${filesArray.length}枚）が届きました！\n準備ができましたらご連絡いたします。`
+                        text: `【処方せん送信完了】`
                     }
                 ]);
             } catch (msgErr) {
@@ -152,6 +146,14 @@ uploadForm.addEventListener('submit', async function(event) {
                 console.warn('LINEへの自動投稿に失敗しました:', msgErr);
             }
         }
+
+        // ── Step② GAS（小人さん）にデータを送ります ─────────────────────
+        // ここでGoogleドライブへの保存と、Botからの返信（プッシュメッセージ）が行われます
+        await fetch(GAS_URL, {
+            method: 'POST',
+            mode:   'no-cors', // CORSエラーを回避するための設定です
+            body:   JSON.stringify(payload)
+        });
 
 
         // ── Step② 送信完了メッセージをポップアップで表示します ──────────────────
