@@ -69,26 +69,28 @@ initLiff();
 // ============================================================
 // 📱 スマホの種類（OS）を判定してボタンを切り替えるお仕事
 // ============================================================
-// iPhone（iOS）からのアクセスかどうかをチェックします
-const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+// iPhone（iOS）からのアクセスかどうかをチェックします（判定をより確実にします）
+const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || 
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad OS 対策
 
 function switchButtonsByOS() {
+    // 全てのアップロードスロット（1〜5）について処理します
     for (let i = 1; i <= 5; i++) {
         const androidBtns = document.getElementById('android-btns-' + i);
         const iosBtns = document.getElementById('ios-btns-' + i);
         
         if (isIOS) {
-            // iPhoneならiPhone用ボタンだけを見せます
+            // iPhoneならiPhone用ボタン（1つのボタン）だけを見せます
             if (androidBtns) androidBtns.style.display = 'none';
             if (iosBtns) iosBtns.style.display = 'flex';
         } else {
-            // Androidやパソコンならそのまま（Android用ボタン）を見せます
+            // AndroidやパソコンならAndroid用ボタン（2つのボタン）を見せます
             if (androidBtns) androidBtns.style.display = 'flex';
             if (iosBtns) iosBtns.style.display = 'none';
         }
     }
 }
-// ページを開いたらすぐにボタンを切り替えます
+// ページを開いた時と、LIFF初期化後に念のため実行します
 switchButtonsByOS();
 
 // ============================================================
