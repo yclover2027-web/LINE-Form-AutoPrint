@@ -20,6 +20,16 @@ let lineUserName = '患者様';
 // 送信した人のLINEユーザーID（薬局からのメッセージ返信に使います）
 let lineUserId = '';
 
+// カメラで撮影した写真を一時的に保管する箱（1〜5番目のスロット）
+// ※ file input に直接セットできない場合があるため、ここに保管します
+let cameraFiles = [null, null, null, null, null];
+
+// 現在カメラを開いている対象のスロット番号（1〜5）
+let currentCameraSlot = 0;
+
+// カメラの映像ストリーム（カメラを止める時に使います）
+let currentStream = null;
+
 
 // ============================================================
 // 🚀 LIFF初期化（ページが開いた時に一番最初に動きます）
@@ -59,7 +69,7 @@ initLiff();
 // ============================================================
 // 1. 写真が選ばれたら、ファイルの名前を画面に表示するお仕事
 // ============================================================
-function setupFileChange(inputId, fileNameId) {
+function setupFileChange(inputId, fileNameId, slotIndex) {
     const fileInput = document.getElementById(inputId);
     const fileNameDisplay = document.getElementById(fileNameId);
 
@@ -67,18 +77,117 @@ function setupFileChange(inputId, fileNameId) {
         if (fileInput.files.length > 0) {
             fileNameDisplay.textContent = '選んだ写真：' + fileInput.files[0].name;
             fileNameDisplay.style.color = '#0056b3';
+            // アルバムから写真を選び直した場合、カメラの写真は上書きされるのでクリア
+            cameraFiles[slotIndex] = null;
         } else {
             fileNameDisplay.textContent = '';
         }
     });
 }
 
-// 5つのボタンそれぞれに設定します
-setupFileChange('file1', 'fileName1');
-setupFileChange('file2', 'fileName2');
-setupFileChange('file3', 'fileName3');
-setupFileChange('file4', 'fileName4');
-setupFileChange('file5', 'fileName5');
+// 5つのボタンそれぞれに設定します（3番目の引数はスロット番号 0〜4）
+setupFileChange('file1', 'fileName1', 0);
+setupFileChange('file2', 'fileName2', 1);
+setupFileChange('file3', 'fileName3', 2);
+setupFileChange('file4', 'fileName4', 3);
+setupFileChange('file5', 'fileName5', 4);
+
+
+// ============================================================
+// 📸 カメラ機能（getUserMedia APIを使った独自カメラ）
+// ============================================================
+
+// カメラを開く（slotNumber = 1〜5）
+async function openCamera(slotNumber) {
+    currentCameraSlot = slotNumber;
+
+    try {
+        // カメラの使用許可を求め、背面カメラで映像を取得します
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment',  // 背面カメラ（書類撮影用）
+                width:  { ideal: 1920 },    // できれば高解像度で
+                height: { ideal: 1080 }
+            },
+            audio: false // 音声は不要です
+        });
+
+        currentStream = stream;
+
+        // カメラ映像を <video> タグに流し込みます
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = stream;
+
+        // カメラオーバーレイを表示します（全画面でカメラが映ります）
+        document.getElementById('cameraOverlay').style.display = 'flex';
+
+    } catch (err) {
+        console.error('カメラの起動に失敗しました:', err);
+        alert('カメラを起動できませんでした。\nカメラの使用を許可してから、もう一度お試しください。');
+    }
+}
+
+// カメラを閉じる
+function closeCamera() {
+    // カメラの映像ストリームを停止します
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+
+    // video要素をクリアします
+    const video = document.getElementById('cameraVideo');
+    video.srcObject = null;
+
+    // カメラオーバーレイを非表示にします
+    document.getElementById('cameraOverlay').style.display = 'none';
+}
+
+// 写真を撮影する
+function takePhoto() {
+    const video  = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+
+    // 映像の実際の解像度に合わせてキャンバスのサイズを設定
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // 映像の1フレームをキャンバスに描画（＝スクリーンショットを撮る）
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // キャンバスの画像をJPEGデータ（Blob）に変換します
+    canvas.toBlob(function(blob) {
+        if (!blob) {
+            alert('撮影に失敗しました。もう一度お試しください。');
+            return;
+        }
+
+        // BlobをFileオブジェクトに変換（名前と日時をつけます）
+        const now = new Date();
+        const fileName = '撮影_' + now.getFullYear()
+            + ('0' + (now.getMonth()+1)).slice(-2)
+            + ('0' + now.getDate()).slice(-2)
+            + '_' + ('0' + now.getHours()).slice(-2)
+            + ('0' + now.getMinutes()).slice(-2)
+            + ('0' + now.getSeconds()).slice(-2)
+            + '.jpg';
+
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+        // カメラ写真を保管箱にセット（スロット番号は 0始まり なので -1 します）
+        cameraFiles[currentCameraSlot - 1] = file;
+
+        // 画面に「撮影した写真：〇〇.jpg」と表示します
+        const fileNameDisplay = document.getElementById('fileName' + currentCameraSlot);
+        fileNameDisplay.textContent = '📷 撮影した写真：' + fileName;
+        fileNameDisplay.style.color = '#e6a23c';
+
+        // カメラを閉じます
+        closeCamera();
+
+    }, 'image/jpeg', 0.85); // JPEG品質 85%（ファイルサイズと画質のバランス）
+}
 
 
 // ============================================================
@@ -91,13 +200,18 @@ uploadForm.addEventListener('submit', async function(event) {
     event.preventDefault();
 
     // 写真をかき集めます
-    const filesArray = [
-        document.getElementById('file1').files[0],
-        document.getElementById('file2').files[0],
-        document.getElementById('file3').files[0],
-        document.getElementById('file4').files[0],
-        document.getElementById('file5').files[0]
-    ].filter(file => file !== undefined); // 空の枠は除外します
+    // ※ 各スロットについて「カメラで撮った写真」か「アルバムから選んだ写真」を採用
+    const filesArray = [];
+    for (let i = 0; i < 5; i++) {
+        const fileInput = document.getElementById('file' + (i + 1));
+        if (cameraFiles[i]) {
+            // カメラで撮影した写真がある場合はそちらを優先
+            filesArray.push(cameraFiles[i]);
+        } else if (fileInput.files.length > 0) {
+            // アルバムから選んだ写真がある場合
+            filesArray.push(fileInput.files[0]);
+        }
+    }
 
     // 1枚も選ばれていなかったらストップします
     if (filesArray.length === 0) {
@@ -156,7 +270,7 @@ uploadForm.addEventListener('submit', async function(event) {
         });
 
 
-        // ── Step② 送信完了メッセージをポップアップで表示します ──────────────────
+        // ── Step③ 送信完了メッセージをポップアップで表示します ──────────────────
         alert('薬局への処方せん送信が完了しました！ 公式LINEにてお返事します！');
 
         // フォームをリセットして空っぽに戻します
@@ -164,6 +278,8 @@ uploadForm.addEventListener('submit', async function(event) {
         for (let i = 1; i <= 5; i++) {
             document.getElementById('fileName' + i).textContent = '';
         }
+        // カメラ写真の保管箱もクリアします
+        cameraFiles = [null, null, null, null, null];
 
     } catch (error) {
         // 通信エラー時の処理
@@ -189,3 +305,4 @@ function convertFileToBase64(file) {
         reader.onerror = error => reject(error);
     });
 }
+

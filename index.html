@@ -67,12 +67,19 @@
             <!-- 1枚目の写真を選ぶ場所（必須） -->
             <div class="upload-section">
                 <label>処方せん画像 1 <span class="required">（必須）</span></label>
-                <!-- 見えない本物のボタン -->
-                <input type="file" id="file1" accept="image/jpeg, image/png, image/heic, image/*" capture="environment" class="hidden-input">
-                <!-- カスタマイズした専用ボタン（カメラのアイコン付き） -->
-                <button type="button" class="upload-btn" onclick="document.getElementById('file1').click()">
-                    <span class="icon">📷</span> 写真を選ぶ（1枚目）
-                </button>
+                <!-- 見えない本物のボタン（アルバムから選ぶ用） -->
+                <input type="file" id="file1" accept="image/*" class="hidden-input">
+                <!-- ボタンを横に並べるエリア -->
+                <div class="btn-group">
+                    <!-- アルバムから選ぶボタン -->
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file1').click()">
+                        <span class="icon">🖼️</span> アルバムから選ぶ
+                    </button>
+                    <!-- カメラで撮影ボタン -->
+                    <button type="button" class="camera-btn" onclick="openCamera(1)">
+                        <span class="icon">📷</span> カメラで撮影
+                    </button>
+                </div>
                 <!-- 選んだ写真の名前が出る場所（最初は空っぽ） -->
                 <p id="fileName1" class="file-name"></p>
             </div>
@@ -80,40 +87,60 @@
             <!-- 2枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 2</label>
-                <input type="file" id="file2" accept="image/jpeg, image/png, image/heic, image/*" capture="environment" class="hidden-input">
-                <button type="button" class="upload-btn" onclick="document.getElementById('file2').click()">
-                    <span class="icon">➕</span> 追加の写真を選ぶ（2枚目）
-                </button>
+                <input type="file" id="file2" accept="image/*" class="hidden-input">
+                <div class="btn-group">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file2').click()">
+                        <span class="icon">🖼️</span> アルバムから選ぶ
+                    </button>
+                    <button type="button" class="camera-btn" onclick="openCamera(2)">
+                        <span class="icon">📷</span> カメラで撮影
+                    </button>
+                </div>
                 <p id="fileName2" class="file-name"></p>
             </div>
 
             <!-- 3枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 3</label>
-                <input type="file" id="file3" accept="image/jpeg, image/png, image/heic, image/*" capture="environment" class="hidden-input">
-                <button type="button" class="upload-btn" onclick="document.getElementById('file3').click()">
-                    <span class="icon">➕</span> 追加の写真を選ぶ（3枚目）
-                </button>
+                <input type="file" id="file3" accept="image/*" class="hidden-input">
+                <div class="btn-group">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file3').click()">
+                        <span class="icon">🖼️</span> アルバムから選ぶ
+                    </button>
+                    <button type="button" class="camera-btn" onclick="openCamera(3)">
+                        <span class="icon">📷</span> カメラで撮影
+                    </button>
+                </div>
                 <p id="fileName3" class="file-name"></p>
             </div>
 
             <!-- 4枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 4</label>
-                <input type="file" id="file4" accept="image/jpeg, image/png, image/heic, image/*" capture="environment" class="hidden-input">
-                <button type="button" class="upload-btn" onclick="document.getElementById('file4').click()">
-                    <span class="icon">➕</span> 追加の写真を選ぶ（4枚目）
-                </button>
+                <input type="file" id="file4" accept="image/*" class="hidden-input">
+                <div class="btn-group">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file4').click()">
+                        <span class="icon">🖼️</span> アルバムから選ぶ
+                    </button>
+                    <button type="button" class="camera-btn" onclick="openCamera(4)">
+                        <span class="icon">📷</span> カメラで撮影
+                    </button>
+                </div>
                 <p id="fileName4" class="file-name"></p>
             </div>
 
             <!-- 5枚目の写真を選ぶ場所 -->
             <div class="upload-section">
                 <label>処方せん画像 5</label>
-                <input type="file" id="file5" accept="image/jpeg, image/png, image/heic, image/*" capture="environment" class="hidden-input">
-                <button type="button" class="upload-btn" onclick="document.getElementById('file5').click()">
-                    <span class="icon">➕</span> 追加の写真を選ぶ（5枚目）
-                </button>
+                <input type="file" id="file5" accept="image/*" class="hidden-input">
+                <div class="btn-group">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('file5').click()">
+                        <span class="icon">🖼️</span> アルバムから選ぶ
+                    </button>
+                    <button type="button" class="camera-btn" onclick="openCamera(5)">
+                        <span class="icon">📷</span> カメラで撮影
+                    </button>
+                </div>
                 <p id="fileName5" class="file-name"></p>
             </div>
 
@@ -126,6 +153,21 @@
                 <p>安全に送信しています...<br>（このままお待ちください）</p>
             </div>
         </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- カメラオーバーレイ（普段は見えず、カメラボタンを押すと全画面で表示） -->
+    <!-- ============================================================ -->
+    <div id="cameraOverlay" class="camera-overlay" style="display:none;">
+        <!-- カメラ映像が映る場所 -->
+        <video id="cameraVideo" autoplay playsinline></video>
+        <!-- 撮影用のキャンバス（裏方で使います、画面には見えません） -->
+        <canvas id="cameraCanvas" style="display:none;"></canvas>
+        <!-- カメラ操作ボタン -->
+        <div class="camera-controls">
+            <button type="button" class="camera-close-btn" onclick="closeCamera()">✕ 閉じる</button>
+            <button type="button" class="camera-shutter-btn" onclick="takePhoto()">📷 撮影</button>
+        </div>
     </div>
 
     <!-- 動きを入れるJavaScriptの読み込み -->
