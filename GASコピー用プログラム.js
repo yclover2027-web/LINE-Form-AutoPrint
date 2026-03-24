@@ -77,9 +77,8 @@ function doPost(e) {
 // 「プッシュメッセージ」とは、BotからLINEユーザーに能動的にメッセージを送る機能です
 function sendLineReply(userId, userName, imageCount) {
   try {
-    var message = userName + '様、処方せん（' + imageCount + '枚）を受け付けました！\n' +
-                  'お薬の準備ができましたら、またご連絡いたします。\n' +
-                  'しばらくお待ちください🌿';
+    var message = userName + 'さん、処方せん（' + imageCount + '枚）を受け付けました！\n' +
+                  'ただいまお薬の準備をしています！少々お待ちください🌿';
 
     // LINEのサーバーに「このユーザーにメッセージを送ってください」とお願いします
     var options = {
