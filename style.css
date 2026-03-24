@@ -262,7 +262,7 @@ p:last-child {
     display: block;
     width: 100%;
     padding: 18px;
-    background: linear-gradient(135deg, #166a3b, #0e4c2a); /* 「ちょうど良い」濃さの緑（はっきり見えて重すぎない色）に変更しました */
+    background: linear-gradient(135deg, #78cfa0, #5eb889); /* さらに明るく、優しく親しみやすい緑色に変更しました */
     color: white;
     border: none;
     border-radius: 30px; /* 丸いボタンに */
