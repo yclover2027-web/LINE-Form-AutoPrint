@@ -303,10 +303,11 @@ uploadForm.addEventListener('submit', async function(event) {
         const imagesData = [];
         for (let i = 0; i < filesArray.length; i++) {
             const file = filesArray[i];
+            // ここで写真が「100%純粋なJPEG」に生まれ変わります
             const base64String = await convertFileToBase64(file);
             const base64Data = base64String.split(',')[1];
             imagesData.push({
-                mimeType: file.type,
+                mimeType: 'image/jpeg', // どんなファイルから作られても中身は必ずJPEGになります
                 base64Data: base64Data
             });
         }
@@ -377,14 +378,56 @@ uploadForm.addEventListener('submit', async function(event) {
 
 
 // ============================================================
-// ファイルを「文字（Base64）」に変換する裏方の関数
+// 写真を「100%純粋なJPEG形式」の文字（Base64）に生まれ変わらせる関数
 // ============================================================
 function convertFileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload  = () => resolve(reader.result);
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                // 見えない画用紙（Canvas）を作ります
+                const canvas = document.createElement('canvas');
+                
+                // 今回は「小さくする」のが目的ではないので、基本そのままのサイズにします。
+                // ただし、ポスター級の異常に巨大な画像（幅4000px以上など）が来ると
+                // それはそれでスマホがフリーズするので、常識的な最大サイズ（幅2560px）にだけ制限します。
+                let width = img.width;
+                let height = img.height;
+                const MAX_SIZE = 2560; // 印刷用としても十分すぎる高解像度です
+                
+                if (width > MAX_SIZE || height > MAX_SIZE) {
+                    if (width > height) {
+                        height = Math.round((height * MAX_SIZE) / width);
+                        width = MAX_SIZE;
+                    } else {
+                        width = Math.round((width * MAX_SIZE) / height);
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                
+                // 透明な部分（PNG画像など）が印刷時に真っ黒にならないよう、背景を真っ白に塗ります
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                
+                // 画用紙に画像を貼り付けます
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // 画用紙に貼った絵を、標準の「JPEG形式（画質90%）」にして取り出します。
+                // これにより、元がWebPでもHEICでも、絶対に「ペイント」が読めるJPEGになります！
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.90);
+                resolve(dataUrl);
+            };
+            img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+            img.src = event.target.result;
+        };
         reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
     });
 }
 
