@@ -1,51 +1,119 @@
 # ===============================================
-# 処方せん自動印刷プログラム（監視用 小人さん）
+# 処方せん・アンケート自動印刷プログラム（本店用 最新安定版）
 # ===============================================
 
-# 💡【設定】見張るフォルダの場所
-$watchFolder = "G:\.shortcut-targets-by-id\1sl0R1Q2rbR1P3DNRFzMuNgXW7xh5mGVu\処方せん受信トレイ"
-$printedFolder = Join-Path $watchFolder "印刷済み"
+Add-Type -AssemblyName System.Drawing
 
-# 「印刷済み」フォルダがなければ作成
-if (-not (Test-Path $printedFolder)) {
-    New-Item -ItemType Directory -Path $printedFolder | Out-Null
+# 💡【設定】見張るフォルダのリスト
+$watchFolders = @(
+    "G:\.shortcut-targets-by-id\1sl0R1Q2rbR1P3DNRFzMuNgXW7xh5mGVu\処方せん受信トレイ",
+    "G:\.shortcut-targets-by-id\1830wThmRTlpZdZaCK9mVbXGMiUj8pF2A\アンケート本店"
+)
+
+# 🖨️ 写真印刷用の関数（ペイントを使わず用紙にピッタリ合わせる）
+function Print-Image {
+    param([string]$ImagePath)
+    
+    $doc = New-Object System.Drawing.Printing.PrintDocument
+    # 縦向きに強制
+    $doc.DefaultPageSettings.Landscape = $false
+    
+    $script:PrintImagePath = $ImagePath
+    
+    $action = {
+        param($sender, $e)
+        
+        $img = [System.Drawing.Image]::FromFile($script:PrintImagePath)
+        
+        # 1. スマホ写真などの回転情報（EXIF）を読み取って正しい向きに補正
+        if ($img.PropertyIdList -contains 0x0112) {
+            $prop = $img.GetPropertyItem(0x0112)
+            $orient = [BitConverter]::ToUInt16($prop.Value, 0)
+            if ($orient -eq 3) { $img.RotateFlip('Rotate180FlipNone') }
+            elseif ($orient -eq 6) { $img.RotateFlip('Rotate90FlipNone') }
+            elseif ($orient -eq 8) { $img.RotateFlip('Rotate270FlipNone') }
+        }
+        
+        # 2. にっさい店での知見：横長の写真は強制的に縦向き（90度回転）にする
+        if ($img.Width -gt $img.Height) {
+            $img.RotateFlip('Rotate90FlipNone')
+        }
+        
+        # 用紙の余白内枠（MarginBounds）を取得
+        $rect = $e.MarginBounds
+        
+        # 用紙にピッタリ収まるようにサイズを計算
+        $ratioX = $rect.Width / $img.Width
+        $ratioY = $rect.Height / $img.Height
+        $ratio = [Math]::Min($ratioX, $ratioY)
+        
+        $w = [int]($img.Width * $ratio)
+        $h = [int]($img.Height * $ratio)
+        
+        # 用紙の中央に配置
+        $x = $rect.Left + ($rect.Width - $w) / 2
+        $y = $rect.Top + ($rect.Height - $h) / 2
+        
+        # 画像を描画して印刷
+        $e.Graphics.DrawImage($img, $x, $y, $w, $h)
+        $img.Dispose()
+    }
+    
+    $doc.add_PrintPage($action)
+    $doc.Print()
+    $doc.Dispose()
 }
 
 Write-Host "==============================================="
-Write-Host "  クローバー調剤薬局さま専用"
-Write-Host "  処方せん自動印刷プログラム（監視用 小人さん）"
+Write-Host "  クローバー調剤薬局 本店さま専用"
+Write-Host "  自動印刷プログラム 稼働中...（最新安定版）"
 Write-Host "==============================================="
 Write-Host ""
-Write-Host "👀 新しい処方せんが Google ドライブ に届くのを見張っています..."
+Write-Host "👀 Google ドライブの 📁処方せん と 📁アンケート を見張っています..."
 Write-Host "※この画面を「×」で閉じると、印刷が停止します。"
 Write-Host ""
 
-# 監視ループ
 while ($true) {
-    # フォルダ内のJPGとPNGを探す
-    $files = Get-ChildItem -Path $watchFolder -Include *.jpg, *.png -File
-    
-    foreach ($file in $files) {
-        Write-Host ("🔔 新しい処方せんを発見しました: " + $file.Name)
+    foreach ($watchFolder in $watchFolders) {
+        # フォルダが存在するか確認
+        if (-not (Test-Path $watchFolder)) { continue }
         
-        $targetPath = Join-Path $printedFolder $file.Name
+        $printedFolder = Join-Path $watchFolder "印刷済み"
+        if (-not (Test-Path $printedFolder)) {
+            New-Item -ItemType Directory -Path $printedFolder | Out-Null
+        }
         
-        try {
-            # 写真を「印刷済み」フォルダへ移動（移動できない場合はダウンロード中と判断）
-            Move-Item -Path $file.FullName -Destination $targetPath -ErrorAction Stop
+        # JPG, PNG, PDF を探す
+        $files = Get-ChildItem -Path $watchFolder -File | Where-Object { $_.Extension -match '\.(jpg|png|jpeg|pdf)$' }
+        
+        foreach ($file in $files) {
+            Write-Host ("🔔 新しいファイルを発見しました: " + $file.Name)
             
-            Write-Host "🖨️ Windowsの「ペイント」を使って印刷をお願いしています..."
-            # ペイントを起動して印刷を実行 (/p オプション)
-            Start-Process mspaint.exe -ArgumentList "/p", "`"$targetPath`"" -Wait
+            $targetPath = Join-Path $printedFolder $file.Name
             
-            Write-Host "✅ 印刷が完了しました！"
-            Write-Host ""
-        } catch {
-            Write-Host "⏳ まだインターネットからダウンロード中のため、数秒待ちます..."
-            Write-Host ""
+            try {
+                # 印刷済みフォルダへ移動
+                Move-Item -Path $file.FullName -Destination $targetPath -ErrorAction Stop
+                Write-Host "🚚 「印刷済み」フォルダに移動しました。"
+                
+                # ペイント(mspaint)は使わず、ファイル形式で処理を分岐
+                if ($file.Extension -match '\.pdf$') {
+                    Write-Host "🖨️ PDFコマンドで印刷しています..."
+                    Start-Process -FilePath $targetPath -Verb Print -Wait
+                } else {
+                    Write-Host "🔄 画像の向きとサイズを自動調整して印刷しています..."
+                    Print-Image -ImagePath $targetPath
+                }
+                
+                Write-Host "✨ 印刷完了！"
+                Write-Host ""
+            } catch {
+                Write-Warning "⚠️ ダウンロード中、または印刷エラーのため待機します"
+                Write-Host "⏳ 5秒後に再試行します..."
+                Write-Host ""
+            }
         }
     }
     
-    # 5秒待機
     Start-Sleep -Seconds 5
 }
