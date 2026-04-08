@@ -394,7 +394,7 @@ function convertFileToBase64(file) {
                 // さらに、Android特有の横長写真をスマホ側で「縦向き」に自動補正します。
                 let width = img.width;
                 let height = img.height;
-                const MAX_SIZE = 1600; 
+                const MAX_SIZE = 1200; 
                 
                 // 1. まずは最大サイズ（1600px）に収まるように計算
                 if (width > MAX_SIZE || height > MAX_SIZE) {

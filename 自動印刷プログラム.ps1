@@ -25,9 +25,19 @@ function Print-Image {
     $action = {
         param($sender, $e)
         
-        $img = [System.Drawing.Image]::FromFile($script:PrintImagePath)
+        # 元のファイルを読み込みます
+        $srcImg = [System.Drawing.Image]::FromFile($script:PrintImagePath)
+        
+        # 💡複合機エラー(F46F)対策：メタデータを完全に剥がすため、新しいキャンバスに描き直します
+        $img = New-Object System.Drawing.Bitmap($srcImg.Width, $srcImg.Height)
+        $g = [System.Drawing.Graphics]::FromImage($img)
+        $g.Clear([System.Drawing.Color]::White) # 背景を白で塗る
+        $g.DrawImage($srcImg, 0, 0) # 元の絵をコピー
+        $g.Dispose()
+        $srcImg.Dispose() # 元のファイルのリソースは解放
         
         # 1. スマホ写真などの回転情報（EXIF）を読み取って正しい向きに補正
+        # ※描き直した時点でEXIFは消えている可能性がありますが、念のため処理は残します
         if ($img.PropertyIdList -contains 0x0112) {
             $prop = $img.GetPropertyItem(0x0112)
             $orient = [BitConverter]::ToUInt16($prop.Value, 0)
