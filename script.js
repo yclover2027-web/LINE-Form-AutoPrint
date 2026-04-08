@@ -389,15 +389,14 @@ function convertFileToBase64(file) {
                 // 見えない画用紙（Canvas）を作ります
                 const canvas = document.createElement('canvas');
                 
-                // 【2026-04-05 改善】複合機のメモリエラー対策
-                // LINEから保存した高解像度写真（4000px超など）が送信されると、
-                // 複合機のメモリが処理しきれずエラーになることがあったため、
-                // 最大サイズを1600px、JPEG品質を80%に抑えました。
-                // A4用紙への印刷では1600pxで十分きれいに文字が読めます。
+                // 【2026-04-08 改善】複合機のメモリエラー対策
+                // スマホ側の最大サイズを1600px、JPEG品質を75%に調整。
+                // さらに、Android特有の横長写真をスマホ側で「縦向き」に自動補正します。
                 let width = img.width;
                 let height = img.height;
-                const MAX_SIZE = 1600; // 複合機でも安定して印刷できるサイズ（A4印刷に十分）
+                const MAX_SIZE = 1600; 
                 
+                // 1. まずは最大サイズ（1600px）に収まるように計算
                 if (width > MAX_SIZE || height > MAX_SIZE) {
                     if (width > height) {
                         height = Math.round((height * MAX_SIZE) / width);
@@ -408,21 +407,39 @@ function convertFileToBase64(file) {
                     }
                 }
 
+                // 2. 【重要】横長の場合、ここで「縦長」に変換するためのサイズ入れ替え
+                let needsRotation = false;
+                if (width > height) {
+                    needsRotation = true;
+                    // 横と縦のサイズを入れ替える
+                    const temp = width;
+                    width = height;
+                    height = temp;
+                }
+
                 canvas.width = width;
                 canvas.height = height;
                 
                 const ctx = canvas.getContext('2d');
                 
-                // 透明な部分（PNG画像など）が印刷時に真っ黒にならないよう、背景を真っ白に塗ります
+                // 透明な部分が真っ黒にならないよう背景を真っ白に
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, width, height);
                 
-                // 画用紙に画像を貼り付けます
-                ctx.drawImage(img, 0, 0, width, height);
+                // 3. 描画（回転が必要な場合は、キャンバスの中心を軸に90度回す）
+                if (needsRotation) {
+                    ctx.save();
+                    ctx.translate(width / 2, height / 2);
+                    ctx.rotate(90 * Math.PI / 180);
+                    ctx.drawImage(img, -height / 2, -width / 2, height, width);
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(img, 0, 0, width, height);
+                }
                 
-                // 画用紙に貼った絵を、標準の「JPEG形式（画質80%）」にして取り出します。
-                // 品質80%でも処方箋の文字は十分読めます。複合機に優しいデータサイズになります。
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
+                // 標準の「JPEG形式（画質75%）」にして取り出します。
+                // 75%でも十分読めます。複合機に優しいデータサイズになります。
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
                 resolve(dataUrl);
             };
             img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
@@ -432,4 +449,3 @@ function convertFileToBase64(file) {
         reader.readAsDataURL(file);
     });
 }
-

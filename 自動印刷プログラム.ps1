@@ -99,9 +99,11 @@ while ($true) {
                 # ペイント(mspaint)は使わず、ファイル形式で処理を分岐
                 if ($file.Extension -match '\.pdf$') {
                     Write-Host "🖨️ PDFコマンドで印刷しています..."
+                    Start-Sleep -Seconds 1 # ファイルの安定待ち
                     Start-Process -FilePath $targetPath -Verb Print -Wait
                 } else {
                     Write-Host "🔄 画像の向きとサイズを自動調整して印刷しています..."
+                    Start-Sleep -Seconds 1 # ファイルの安定待ち
                     Print-Image -ImagePath $targetPath
                 }
                 
