@@ -15,6 +15,8 @@ function Print-Image {
     param([string]$ImagePath)
     
     $doc = New-Object System.Drawing.Printing.PrintDocument
+    # 複合機エラー(F46F)対策：印刷ジョブ名を安全な英数字に固定します
+    $doc.DocumentName = "LINE_Print_Job"
     # 縦向きに強制
     $doc.DefaultPageSettings.Landscape = $false
     
@@ -100,7 +102,16 @@ while ($true) {
                 if ($file.Extension -match '\.pdf$') {
                     Write-Host "🖨️ PDFコマンドで印刷しています..."
                     Start-Sleep -Seconds 1 # ファイルの安定待ち
-                    Start-Process -FilePath $targetPath -Verb Print -Wait
+                    
+                    # 複合機エラー(F46F)対策：ファイル名に絵文字があると落ちるため、一時的に安全な名前に変えて印刷します
+                    $tempPdfPath = Join-Path $printedFolder "temp_print_file.pdf"
+                    if (Test-Path $tempPdfPath) { Remove-Item $tempPdfPath -Force }
+                    Copy-Item $targetPath $tempPdfPath
+                    
+                    Start-Process -FilePath $tempPdfPath -Verb Print -Wait
+                    
+                    Start-Sleep -Seconds 2 # 印刷指示が飛ぶのを待つ
+                    Remove-Item $tempPdfPath -Force
                 } else {
                     Write-Host "🔄 画像の向きとサイズを自動調整して印刷しています..."
                     Start-Sleep -Seconds 1 # ファイルの安定待ち

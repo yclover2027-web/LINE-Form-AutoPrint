@@ -35,8 +35,9 @@ function doPost(e) {
     // 例：20260323_221500_鈴木一郎_1枚目.jpg
     var now = new Date();
     var timeString = Utilities.formatDate(now, "Asia/Tokyo", "yyyyMMdd_HHmmss");
-    // お名前をファイル名に使える形に整えます（スペースはアンダーバーに変換）
-    var safeUserName = userName.replace(/\s+/g, '_');
+    // お名前をファイル名に使える形に整えます（絵文字や特殊文字を除去し、スペースはアンダーバーに変換）
+    // 漢字、ひらがな、カタカナ、英数字、ハイフン、アンダーバー以外を消去します
+    var safeUserName = userName.replace(/[^\u3040-\u309f\u30a0-\u30ff\uff61-\uff9f\u4e00-\u9faf\u3005\u3007\u303b\w\s-]/g, '').replace(/\s+/g, '_') || 'User';
 
     // 4. 送られてきた写真を順番にドライブへ保存します
     var savedFileNames = [];
