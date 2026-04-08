@@ -17,6 +17,16 @@ function Print-Image {
     $doc = New-Object System.Drawing.Printing.PrintDocument
     # 複合機エラー(F46F)対策：印刷ジョブ名を安全な英数字に固定します
     $doc.DocumentName = "LINE_Print_Job"
+    
+    # 💡複合機エラー(F46F)対策：用紙サイズを明示的に「A4」に指定します
+    $a4Size = $doc.PrinterSettings.PaperSizes | Where-Object { $_.Kind -eq "A4" -or $_.PaperName -match "A4" }
+    if ($a4Size) {
+        $doc.DefaultPageSettings.PaperSize = $a4Size[0]
+        Write-Host "📄 用紙サイズを A4 に設定しました。"
+    } else {
+        Write-Warning "⚠️ プリンタ設定に A4 が見つかりませんでした。既定値を使用します。"
+    }
+
     # 縦向きに強制
     $doc.DefaultPageSettings.Landscape = $false
     

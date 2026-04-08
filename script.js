@@ -394,7 +394,7 @@ function convertFileToBase64(file) {
                 // さらに、Android特有の横長写真をスマホ側で「縦向き」に自動補正します。
                 let width = img.width;
                 let height = img.height;
-                const MAX_SIZE = 1200; 
+                const MAX_SIZE = 1000; 
                 
                 // 1. まずは最大サイズ（1600px）に収まるように計算
                 if (width > MAX_SIZE || height > MAX_SIZE) {
@@ -439,7 +439,7 @@ function convertFileToBase64(file) {
                 
                 // 標準の「JPEG形式（画質75%）」にして取り出します。
                 // 75%でも十分読めます。複合機に優しいデータサイズになります。
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
                 resolve(dataUrl);
             };
             img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
