@@ -82,14 +82,19 @@ while ($true) {
                         }
 
                         # 💡最強の安定化（F46Fエラー防止ワクチン）
-                        # 複合機がパンク(F46F)する原因はスマホの超高画質データをそのままプリンタに送るためです。
-                        # ここでA4用紙に必要十分なサイズ（長辺1750px程度）に縮小し、メタデータを完全剥離した新品の画像を作ります。
+                        # 長辺を2500px（A4サイズの綺麗な印刷に十分な高解像度）に設定
                         $ratio = $img.Width / $img.Height
-                        $newHeight = 1750
-                        $newWidth = 1750 * $ratio
+                        $newHeight = 2500
+                        $newWidth = 2500 * $ratio
                         
                         $cleanBmp = New-Object System.Drawing.Bitmap([int]$newWidth, [int]$newHeight)
                         $g = [System.Drawing.Graphics]::FromImage($cleanBmp)
+                        
+                        # 💡超高画質化オプション
+                        $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                        $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+                        $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+                        
                         $g.Clear([System.Drawing.Color]::White)
                         $g.DrawImage($img, 0, 0, [int]$newWidth, [int]$newHeight)
                         $g.Dispose()
@@ -122,6 +127,9 @@ while ($true) {
                         $pd.add_PrintPage({
                             param($sender, $e)
                             $imgToPrint = [System.Drawing.Image]::FromFile($printTarget)
+                            # 印刷時も最高画質設定を有効にする
+                            $e.Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                            
                             # 用紙のサイズいっぱいに画像を配置する
                             $e.Graphics.DrawImage($imgToPrint, $e.PageBounds)
                             $imgToPrint.Dispose()

@@ -389,14 +389,14 @@ function convertFileToBase64(file) {
                 // 見えない画用紙（Canvas）を作ります
                 const canvas = document.createElement('canvas');
                 
-                // 【2026-04-08 改善】複合機のメモリエラー対策
-                // スマホ側の最大サイズを1600px、JPEG品質を75%に調整。
-                // さらに、Android特有の横長写真をスマホ側で「縦向き」に自動補正します。
+                // 【2026-04-09 改善】画質向上アップデート
+                // パソコン側（PowerShell）で安全に印刷する「ワクチン処理」が完成したため、
+                // スマホ側での過剰な画質低下（1000px）を撤廃し、A4印刷に耐えうる2400pxまで高解像度化します。
                 let width = img.width;
                 let height = img.height;
-                const MAX_SIZE = 1000; 
+                const MAX_SIZE = 2400; // ← 1000pxから2400px（超高画質）へ拡大！
                 
-                // 1. まずは最大サイズ（1600px）に収まるように計算
+                // 1. まずは最大サイズ（2400px）に収まるように計算
                 if (width > MAX_SIZE || height > MAX_SIZE) {
                     if (width > height) {
                         height = Math.round((height * MAX_SIZE) / width);
@@ -437,9 +437,8 @@ function convertFileToBase64(file) {
                     ctx.drawImage(img, 0, 0, width, height);
                 }
                 
-                // 標準の「JPEG形式（画質75%）」にして取り出します。
-                // 75%でも十分読めます。複合機に優しいデータサイズになります。
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
+                // 標準の「JPEG形式」にして取り出します。（品質を0.70から0.85へアップしてくっきり！）
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                 resolve(dataUrl);
             };
             img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
