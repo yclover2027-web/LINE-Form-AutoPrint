@@ -81,13 +81,20 @@ while ($true) {
                             $img.RotateFlip([System.Drawing.RotateFlipType]::Rotate90FlipNone)
                         }
 
-                        # 💡最強の安定化：余計な情報（Exifや機種情報等）を完全に捨てるため、真っ白なキャンバスに描き直す
-                        $cleanBmp = New-Object System.Drawing.Bitmap($img.Width, $img.Height)
+                        # 💡最強の安定化（F46Fエラー防止ワクチン）
+                        # 複合機がパンク(F46F)する原因はスマホの超高画質データをそのままプリンタに送るためです。
+                        # ここでA4用紙に必要十分なサイズ（長辺1750px程度）に縮小し、メタデータを完全剥離した新品の画像を作ります。
+                        $ratio = $img.Width / $img.Height
+                        $newHeight = 1750
+                        $newWidth = 1750 * $ratio
+                        
+                        $cleanBmp = New-Object System.Drawing.Bitmap([int]$newWidth, [int]$newHeight)
                         $g = [System.Drawing.Graphics]::FromImage($cleanBmp)
-                        $g.DrawImage($img, 0, 0, $img.Width, $img.Height)
+                        $g.Clear([System.Drawing.Color]::White)
+                        $g.DrawImage($img, 0, 0, [int]$newWidth, [int]$newHeight)
                         $g.Dispose()
 
-                        # ペイントが最も安定して処理できるBMP形式で一時保存
+                        # 最も安定して処理できるBMP形式で一時保存
                         $cleanBmp.Save($tempImgPath, [System.Drawing.Imaging.ImageFormat]::Bmp)
                         
                         # メモリ解放
@@ -100,40 +107,38 @@ while ($true) {
                         $printTarget = $targetPath
                     }
                     
-                    # 💡最重要：ペイント(mspaint)自体の印刷設定（直前の記憶）が邪魔をするケースがあるため、
-                    # レジストリを直接操作して、印刷設定を「縦向き」「1枚の用紙いっぱいに合わせる」に強制リセットします。
+                    # 💡Windows 11でのペイントアプリの仕様変更などに対抗するため、外部アプリに頼らず、
+                    # プログラム内部の印刷機能（PrintDocument）を使い、強制的に「絶対に縦長で印刷しろ」と命令します。
+                    Write-Host "🖨️ 専用印刷エンジンを利用して印刷しています..."
+                    
                     try {
-                        $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Paint\PageSetup"
-                        if (-not (Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
-                        # 1=縦向き, 2=横向き
-                        Set-ItemProperty -Path $regPath -Name "Orientation" -Value 1
-                        # 1=ページに合わせて縮小
-                        Set-ItemProperty -Path $regPath -Name "FitTo" -Value 1
-                        Set-ItemProperty -Path $regPath -Name "FitX" -Value 1
-                        Set-ItemProperty -Path $regPath -Name "FitY" -Value 1
-                        # 余白を最小にする
-                        Set-ItemProperty -Path $regPath -Name "MarginLeft" -Value 0
-                        Set-ItemProperty -Path $regPath -Name "MarginTop" -Value 0
-                        Set-ItemProperty -Path $regPath -Name "MarginRight" -Value 0
-                        Set-ItemProperty -Path $regPath -Name "MarginBottom" -Value 0
-                    } catch {
-                        Write-Warning "ペイントの印刷設定の自動変更に失敗しました。"
-                    }
+                        $pd = New-Object System.Drawing.Printing.PrintDocument
+                        # 強制的に「縦向き(Landscape=false)」を指定
+                        $pd.DefaultPageSettings.Landscape = $false
+                        # 余白を極限までゼロにする
+                        $pd.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0, 0, 0, 0)
 
-                    # 💡複合機エラー(F46F)対策：C#のPrintDocumentを使わず、Windows標準のmspaintに印刷を丸投げします
-                    # mspaint /pt "ファイルパス" で既定のプリンタに印刷されます
-                    Wait-Process -Name "mspaint" -ErrorAction SilentlyContinue # 他のペイントが完全に閉じるのを待つ
-                    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-                    $pinfo.FileName = "mspaint.exe"
-                    $pinfo.Arguments = "/pt `"$printTarget`""
-                    $pinfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
-                    $p = [System.Diagnostics.Process]::Start($pinfo)
-                    $p.WaitForExit(10000) # 10秒待機
-                    
-                    Start-Sleep -Seconds 2 # プリンタにジョブが送られるのを待つ
-                    
-                    # 一時ファイルを削除（ロックされていなければ）
-                    if (Test-Path $tempImgPath) { Remove-Item $tempImgPath -ErrorAction SilentlyContinue }
+                        # 印刷する瞬間の処理を定義
+                        $pd.add_PrintPage({
+                            param($sender, $e)
+                            $imgToPrint = [System.Drawing.Image]::FromFile($printTarget)
+                            # 用紙のサイズいっぱいに画像を配置する
+                            $e.Graphics.DrawImage($imgToPrint, $e.PageBounds)
+                            $imgToPrint.Dispose()
+                        })
+
+                        # 印刷実行
+                        $pd.Print()
+                        $pd.Dispose()
+                        
+                        Start-Sleep -Seconds 2
+                        
+                        # 一時ファイルを削除
+                        if (Test-Path $printTarget) { Remove-Item $printTarget -ErrorAction SilentlyContinue }
+                        
+                    } catch {
+                        Write-Warning "印刷中にエラーが発生しました: $_"
+                    }
                 }
                 
                 Write-Host "✨ 印刷指示が完了しました！"
