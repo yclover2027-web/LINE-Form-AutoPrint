@@ -54,19 +54,46 @@ while ($true) {
                     Start-Sleep -Seconds 2 # 印刷指示が飛ぶのを待つ
                     Remove-Item $tempPdfPath -Force
                 } else {
-                    Write-Host "🔄 画像をペイント経由で印刷しています..."
+                    Write-Host "🔄 画像の向きを調整してペイント経由で印刷しています..."
                     Start-Sleep -Seconds 1 # ファイルの安定待ち
+                    
+                    # C#の画像ライブラリを読み込み
+                    Add-Type -AssemblyName System.Drawing
+                    $tempImgPath = Join-Path $printedFolder "temp_print_img.bmp" 
+                    
+                    try {
+                        # 画像を読み込み
+                        $img = [System.Drawing.Image]::FromFile($targetPath)
+                        
+                        # 💡横長（幅が高さより大きい）の場合は90度回転させて縦にする
+                        if ($img.Width -gt $img.Height) {
+                            Write-Host "📐 横長の写真を検知しました。縦向きに回転させます。"
+                            $img.RotateFlip([System.Drawing.RotateFlipType]::Rotate90FlipNone)
+                        }
+
+                        # ペイントが最も安定して処理できるBMP形式で一時保存
+                        $img.Save($tempImgPath, [System.Drawing.Imaging.ImageFormat]::Bmp)
+                        $img.Dispose()
+                        
+                        $printTarget = $tempImgPath
+                    } catch {
+                        Write-Warning "画像の前処理に失敗しました。元の画像をそのまま印刷します。"
+                        $printTarget = $targetPath
+                    }
                     
                     # 💡複合機エラー(F46F)対策：C#のPrintDocumentを使わず、Windows標準のmspaintに印刷を丸投げします
                     # mspaint /pt "ファイルパス" で既定のプリンタに印刷されます
                     $pinfo = New-Object System.Diagnostics.ProcessStartInfo
                     $pinfo.FileName = "mspaint.exe"
-                    $pinfo.Arguments = "/pt `"$targetPath`""
+                    $pinfo.Arguments = "/pt `"$printTarget`""
                     $pinfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
                     $p = [System.Diagnostics.Process]::Start($pinfo)
                     $p.WaitForExit(10000) # 10秒待機
                     
                     Start-Sleep -Seconds 2 # プリンタにジョブが送られるのを待つ
+                    
+                    # 一時ファイルを削除（ロックされていなければ）
+                    if (Test-Path $tempImgPath) { Remove-Item $tempImgPath -ErrorAction SilentlyContinue }
                 }
                 
                 Write-Host "✨ 印刷指示が完了しました！"
